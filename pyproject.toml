@@ -1,0 +1,60 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sentinelcx"
+version = "0.1.0"
+description = "Enterprise Customer Support Intelligence System"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "anthropic>=0.78",
+    "claude-agent-sdk>=0.1.33",
+    "fastmcp>=2.14",
+    "simple-salesforce",
+    "slack-sdk>=3.39",
+    "httpx",
+    "sentence-transformers>=3.0",
+    "numpy",
+    "fastapi",
+    "uvicorn",
+    "pydantic>=2.0",
+    "pydantic-settings",
+    "python-dotenv",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-timeout",
+    "ruff",
+    "mypy",
+]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+
+[tool.ruff.lint.per-file-ignores]
+"seed_data/knowledge_base_content.py" = ["E501"]
+"seed_data/templates.py" = ["E501"]
+"src/sentinelcx/agents/prompts.py" = ["E501"]
+"src/sentinelcx/orchestrator.py" = ["E501"]
+"src/sentinelcx/evaluation/hallucination.py" = ["E501"]
+"tests/unit/test_models.py" = ["E501"]
+"tests/unit/test_skills.py" = ["E501"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true

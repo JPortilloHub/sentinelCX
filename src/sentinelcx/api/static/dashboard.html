@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sentinelCX Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-primary: #0a0a0b;
+  --bg-secondary: #111113;
+  --bg-tertiary: #18181b;
+  --bg-card: rgba(255,255,255,0.03);
+  --glass-bg: rgba(255,255,255,0.04);
+  --glass-border: rgba(255,255,255,0.08);
+  --glass-blur: blur(20px);
+  --border-subtle: rgba(255,255,255,0.06);
+  --border-default: rgba(255,255,255,0.1);
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted: #52525b;
+  --accent-blue: #3b82f6;
+  --accent-green: #22c55e;
+  --accent-yellow: #eab308;
+  --accent-red: #ef4444;
+  --accent-purple: #a855f7;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', monospace;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 56px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(34,197,94,0.1);
+  border: 1px solid rgba(34,197,94,0.2);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent-green);
+}
+
+.status-badge.disconnected {
+  background: rgba(239,68,68,0.1);
+  border-color: rgba(239,68,68,0.2);
+  color: var(--accent-red);
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.3); }
+}
+
+.header-stats {
+  display: flex;
+  gap: 24px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Main Grid ── */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 16px;
+  padding: 16px;
+  flex: 1;
+  min-height: 0;
+}
+
+@media (max-width: 1024px) {
+  .main-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Panels ── */
+.panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.panel-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.panel-body::-webkit-scrollbar { width: 4px; }
+.panel-body::-webkit-scrollbar-track { background: transparent; }
+.panel-body::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 4px; }
+
+/* ── Ticket Cards ── */
+.ticket-card {
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--text-muted);
+  animation: slideIn 0.3s ease-out;
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.ticket-card:hover { background: rgba(255,255,255,0.05); }
+.ticket-card.decision-auto_handle { border-left-color: var(--accent-green); }
+.ticket-card.decision-needs_research { border-left-color: var(--accent-yellow); }
+.ticket-card.decision-escalate { border-left-color: var(--accent-red); }
+.ticket-card.active { background: rgba(59,130,246,0.05); border-color: rgba(59,130,246,0.15); }
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ticket-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.ticket-id {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-blue);
+}
+
+.ticket-time {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.ticket-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.badge-decision {
+  color: #fff;
+}
+.badge-auto_handle { background: linear-gradient(135deg, #22c55e, #16a34a); }
+.badge-needs_research { background: linear-gradient(135deg, #eab308, #ca8a04); }
+.badge-escalate { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+.badge-category {
+  background: rgba(255,255,255,0.06);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.badge-priority {
+  color: #fff;
+}
+.badge-urgent { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+.badge-high { background: linear-gradient(135deg, #f97316, #c2410c); }
+.badge-medium { background: linear-gradient(135deg, #eab308, #a16207); }
+.badge-low { background: linear-gradient(135deg, #22c55e, #15803d); }
+
+/* ── Steps ── */
+.ticket-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: background 0.3s;
+}
+
+.step-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  width: 18px;
+  text-align: center;
+}
+
+.step.active {
+  background: rgba(59,130,246,0.08);
+  color: var(--accent-blue);
+  animation: shimmer 2s linear infinite;
+  background-size: 200% 100%;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.step.active {
+  background: linear-gradient(90deg,
+    rgba(59,130,246,0.05) 25%,
+    rgba(59,130,246,0.12) 50%,
+    rgba(59,130,246,0.05) 75%);
+  background-size: 200% 100%;
+}
+
+.step.done { color: var(--accent-green); }
+.step.error { color: var(--accent-red); }
+
+.service-icons {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.svc-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-subtle);
+  opacity: 0.3;
+  transition: opacity 0.3s, border-color 0.3s;
+}
+
+.svc-icon.used {
+  opacity: 1;
+  border-color: var(--border-default);
+}
+
+/* ── Processing Panel ── */
+.processing-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  gap: 12px;
+}
+
+.processing-empty-icon {
+  font-size: 40px;
+  opacity: 0.3;
+}
+
+.processing-empty-text {
+  font-size: 13px;
+}
+
+.agent-card {
+  padding: 16px;
+  margin-bottom: 10px;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  animation: slideIn 0.3s ease-out;
+}
+
+.agent-name {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agent-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.agent-dot.triage { background: var(--accent-blue); }
+.agent-dot.research { background: var(--accent-purple); }
+.agent-dot.response { background: var(--accent-green); }
+.agent-dot.escalation { background: var(--accent-red); }
+
+.agent-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ── Metrics Strip ── */
+.metrics-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 12px 16px 16px;
+  flex-shrink: 0;
+}
+
+.metric-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  min-height: 130px;
+}
+
+.metric-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 10px;
+}
+
+.metric-value-large {
+  font-size: 28px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Donut Chart ── */
+.donut-container {
+  position: relative;
+  width: 90px;
+  height: 90px;
+}
+
+.donut-container canvas {
+  width: 90px;
+  height: 90px;
+}
+
+.donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* ── Bar Chart ── */
+.bar-chart {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bar-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  width: 55px;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.bar-track {
+  flex: 1;
+  height: 8px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+  transition: width 0.6s ease;
+  min-width: 0;
+}
+
+.bar-count {
+  font-size: 10px;
+  color: var(--text-muted);
+  width: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Gauge ── */
+.gauge-container {
+  position: relative;
+  width: 90px;
+  height: 50px;
+  overflow: hidden;
+}
+
+.gauge-arc {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--accent-green) 0deg,
+    var(--accent-green) var(--gauge-angle, 0deg),
+    rgba(255,255,255,0.06) var(--gauge-angle, 0deg),
+    rgba(255,255,255,0.06) 180deg,
+    transparent 180deg
+  );
+  mask: radial-gradient(circle at center, transparent 30px, black 31px);
+  -webkit-mask: radial-gradient(circle at center, transparent 30px, black 31px);
+  transition: --gauge-angle 0.6s ease;
+}
+
+.gauge-value {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* ── Cost ── */
+.cost-value {
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent-green), var(--accent-blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Legend ── */
+.donut-legend {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+/* ── Tabs ── */
+.tab-group {
+  display: flex;
+  gap: 2px;
+  background: rgba(255,255,255,0.04);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+}
+
+.tab {
+  padding: 4px 14px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.tab:hover { color: var(--text-secondary); }
+
+.tab.active {
+  background: rgba(255,255,255,0.08);
+  color: var(--text-primary);
+}
+
+/* ── History Cards ── */
+.history-card {
+  padding: 12px 14px;
+  margin-bottom: 6px;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--text-muted);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.history-card:hover { background: rgba(255,255,255,0.05); }
+.history-card.decision-auto_handle { border-left-color: var(--accent-green); }
+.history-card.decision-needs_research { border-left-color: var(--accent-yellow); }
+.history-card.decision-escalate { border-left-color: var(--accent-red); }
+
+.history-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.history-id {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-blue);
+}
+
+.history-date {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.history-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.history-stat-value { color: var(--text-secondary); font-weight: 500; }
+
+.history-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.load-more-btn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.load-more-btn:hover { background: rgba(255,255,255,0.08); }
+
+/* ── Detail modal overlay ── */
+.detail-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+
+.detail-overlay.open { display: flex; }
+
+.detail-panel {
+  background: var(--bg-secondary);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.detail-panel::-webkit-scrollbar { width: 4px; }
+.detail-panel::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 4px; }
+
+.detail-close {
+  float: right;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.detail-close:hover { color: var(--text-primary); }
+
+.detail-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.detail-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.detail-event {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  font-size: 12px;
+}
+
+.detail-event-time {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  min-width: 70px;
+}
+
+.detail-event-icon { font-size: 14px; }
+.detail-event-label { color: var(--text-secondary); }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-left">
+    <span class="logo">sentinelCX</span>
+    <div class="status-badge" id="status-badge">
+      <span class="status-dot"></span>
+      <span id="status-text">Live</span>
+    </div>
+  </div>
+  <div class="header-stats">
+    <div class="stat">
+      <span class="stat-value" id="stat-processed">0</span>
+      <span class="stat-label">Processed</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value" id="stat-avg-time">--</span>
+      <span class="stat-label">Avg Time</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value" id="stat-auto-rate">--%</span>
+      <span class="stat-label">Auto Rate</span>
+    </div>
+  </div>
+</header>
+
+<!-- Main Content -->
+<main class="main-grid">
+  <!-- Activity Feed -->
+  <section class="panel">
+    <div class="panel-header">
+      <div class="tab-group">
+        <button class="tab active" data-tab="live" onclick="dashboard.switchTab('live')">Live</button>
+        <button class="tab" data-tab="history" onclick="dashboard.switchTab('history')">History</button>
+      </div>
+      <span id="feed-count" style="font-size:12px;color:var(--text-muted)">0 tickets</span>
+    </div>
+    <div class="panel-body" id="feed"></div>
+    <div class="panel-body" id="history" style="display:none"></div>
+  </section>
+
+  <!-- Processing Panel -->
+  <section class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Current Processing</span>
+    </div>
+    <div class="panel-body" id="processing">
+      <div class="processing-empty">
+        <div class="processing-empty-icon">&#9881;</div>
+        <div class="processing-empty-text">Waiting for tickets...</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Metrics Strip -->
+<footer class="metrics-strip">
+  <div class="metric-card">
+    <div class="donut-container">
+      <canvas id="chart-donut" width="180" height="180"></canvas>
+      <div class="donut-center" id="donut-total">0</div>
+    </div>
+    <div class="donut-legend">
+      <span class="legend-item"><span class="legend-dot" style="background:var(--accent-green)"></span>Auto</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--accent-yellow)"></span>Research</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--accent-red)"></span>Escalate</span>
+    </div>
+    <span class="metric-label">Decisions</span>
+  </div>
+  <div class="metric-card">
+    <div class="bar-chart" id="chart-categories"></div>
+    <span class="metric-label">Categories</span>
+  </div>
+  <div class="metric-card">
+    <div class="gauge-container">
+      <div class="gauge-arc" id="gauge-arc"></div>
+      <div class="gauge-value" id="gauge-value">--</div>
+    </div>
+    <span class="metric-label">Avg Confidence</span>
+  </div>
+  <div class="metric-card">
+    <span class="cost-value" id="cost-total">$0.00</span>
+    <span class="metric-label">API Spend</span>
+  </div>
+</footer>
+
+<!-- Detail Overlay -->
+<div class="detail-overlay" id="detail-overlay" onclick="if(event.target===this)dashboard.closeDetail()">
+  <div class="detail-panel">
+    <button class="detail-close" onclick="dashboard.closeDetail()">&times;</button>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<script>
+const SERVICE_ICONS = {
+  chatwoot: '\u{1F4AC}',
+  salesforce: '\u2601\uFE0F',
+  knowledge: '\u{1F4DA}',
+  slack: '\u{1F514}',
+  system: '\u2699\uFE0F',
+};
+
+const AGENT_LABELS = {
+  triage: 'Triage Agent',
+  research: 'Research Agent',
+  response: 'Response Agent',
+  escalation: 'Escalation Agent',
+  unknown: 'Agent',
+};
+
+class SentinelDashboard {
+  constructor() {
+    this.metrics = {
+      total_processed: 0,
+      auto_handle_count: 0,
+      needs_research_count: 0,
+      escalate_count: 0,
+      total_cost_usd: 0,
+      total_duration_ms: 0,
+      category_counts: {},
+      confidence_sum: 0,
+      confidence_count: 0,
+    };
+    this.activeTickets = {};
+    this.ticketCards = {};
+    this.agentCards = {};
+    this.init();
+  }
+
+  init() {
+    this.connectSSE();
+  }
+
+  connectSSE() {
+    this.es = new EventSource('/api/v1/dashboard/events');
+
+    this.es.addEventListener('snapshot', (e) => {
+      const data = JSON.parse(e.data);
+      this.metrics = data.metrics;
+      this.activeTickets = data.active_tickets || {};
+      this.renderMetrics();
+      // Replay recent events for feed
+      (data.recent_events || []).forEach(ev => this.handleEvent(ev));
+    });
+
+    const types = [
+      'ticket_received','agent_start','tool_call',
+      'tool_result','ticket_complete','ticket_error',
+    ];
+    types.forEach(t => {
+      this.es.addEventListener(t, (e) => {
+        this.handleEvent(JSON.parse(e.data));
+      });
+    });
+
+    this.es.onopen = () => {
+      const badge = document.getElementById('status-badge');
+      badge.classList.remove('disconnected');
+      document.getElementById('status-text').textContent = 'Live';
+    };
+
+    this.es.onerror = () => {
+      const badge = document.getElementById('status-badge');
+      badge.classList.add('disconnected');
+      document.getElementById('status-text').textContent = 'Reconnecting';
+    };
+  }
+
+  handleEvent(event) {
+    const cid = event.conversation_id;
+    switch (event.type) {
+      case 'ticket_received':
+        this.onTicketReceived(cid, event);
+        break;
+      case 'agent_start':
+        this.onAgentStart(cid, event.data);
+        break;
+      case 'tool_call':
+        this.onToolCall(cid, event.data);
+        break;
+      case 'tool_result':
+        this.onToolResult(cid, event.data);
+        break;
+      case 'ticket_complete':
+        this.onTicketComplete(cid, event.data);
+        break;
+      case 'ticket_error':
+        this.onTicketError(cid, event.data);
+        break;
+    }
+  }
+
+  // ─── Event Handlers ───
+
+  onTicketReceived(cid, event) {
+    if (this.ticketCards[cid]) return; // already shown
+
+    const feed = document.getElementById('feed');
+    const card = document.createElement('div');
+    card.className = 'ticket-card active';
+    card.id = `ticket-${cid}`;
+    card.innerHTML = `
+      <div class="ticket-top">
+        <span class="ticket-id">#${cid}</span>
+        <span class="ticket-time">${this.timeAgo(event.timestamp)}</span>
+      </div>
+      <div class="ticket-meta" id="meta-${cid}"></div>
+      <div class="service-icons" id="svc-${cid}">
+        <span class="svc-icon" data-svc="chatwoot" title="Chatwoot">${SERVICE_ICONS.chatwoot}</span>
+        <span class="svc-icon" data-svc="salesforce" title="Salesforce">${SERVICE_ICONS.salesforce}</span>
+        <span class="svc-icon" data-svc="knowledge" title="Knowledge Base">${SERVICE_ICONS.knowledge}</span>
+        <span class="svc-icon" data-svc="slack" title="Slack">${SERVICE_ICONS.slack}</span>
+      </div>
+      <div class="ticket-steps" id="steps-${cid}"></div>
+    `;
+    feed.prepend(card);
+    this.ticketCards[cid] = card;
+    this.updateFeedCount();
+
+    // Add to processing panel
+    this.showProcessing(cid);
+  }
+
+  onAgentStart(cid, data) {
+    const agent = data.agent || 'unknown';
+    const proc = document.getElementById('processing');
+
+    // Clear empty state
+    const empty = proc.querySelector('.processing-empty');
+    if (empty) empty.remove();
+
+    const agentCard = document.createElement('div');
+    agentCard.className = 'agent-card';
+    agentCard.id = `agent-${cid}-${agent}`;
+    agentCard.innerHTML = `
+      <div class="agent-name">
+        <span class="agent-dot ${agent}"></span>
+        ${AGENT_LABELS[agent] || agent}
+        <span style="color:var(--text-muted);font-size:11px;font-weight:400">· #${cid}</span>
+      </div>
+      <div class="agent-steps" id="asteps-${cid}-${agent}"></div>
+    `;
+    proc.prepend(agentCard);
+    this.agentCards[`${cid}-${agent}`] = agentCard;
+
+    // Also add step to feed card
+    this.addFeedStep(cid, `${AGENT_LABELS[agent]} started`, 'active');
+  }
+
+  onToolCall(cid, data) {
+    const svc = data.service || 'system';
+    const tool = data.tool || '';
+
+    // Light up service icon in feed card
+    const svcContainer = document.getElementById(`svc-${cid}`);
+    if (svcContainer) {
+      const icon = svcContainer.querySelector(`[data-svc="${svc}"]`);
+      if (icon) icon.classList.add('used');
+    }
+
+    // Add step to feed card
+    const icon = SERVICE_ICONS[svc] || '\u2699\uFE0F';
+    this.addFeedStep(cid, `${icon} ${tool}`, 'active', data.tool_use_id);
+
+    // Add step to active agent card in processing panel
+    const agentKey = this.findActiveAgent(cid);
+    if (agentKey) {
+      const stepsEl = document.getElementById(`asteps-${agentKey}`);
+      if (stepsEl) {
+        const step = document.createElement('div');
+        step.className = 'step active';
+        step.id = `pstep-${data.tool_use_id}`;
+        step.innerHTML = `<span class="step-icon">${icon}</span> ${svc}/${tool}`;
+        stepsEl.appendChild(step);
+      }
+    }
+  }
+
+  onToolResult(cid, data) {
+    const status = data.is_error ? 'error' : 'done';
+    const icon = data.is_error ? '\u274C' : '\u2705';
+
+    // Update feed step
+    const stepsEl = document.getElementById(`steps-${cid}`);
+    if (stepsEl) {
+      const active = stepsEl.querySelectorAll('.step.active');
+      if (active.length > 0) {
+        const last = active[active.length - 1];
+        last.classList.remove('active');
+        last.classList.add(status);
+        const iconEl = last.querySelector('.step-icon');
+        if (iconEl) iconEl.textContent = icon;
+      }
+    }
+
+    // Update processing panel step
+    const pstep = document.getElementById(`pstep-${data.tool_use_id}`);
+    if (pstep) {
+      pstep.classList.remove('active');
+      pstep.classList.add(status);
+      const iconEl = pstep.querySelector('.step-icon');
+      if (iconEl) iconEl.textContent = icon;
+    }
+  }
+
+  onTicketComplete(cid, data) {
+    const card = this.ticketCards[cid];
+    if (card) {
+      card.classList.remove('active');
+      const decision = data.decision || '';
+      if (decision) card.classList.add(`decision-${decision}`);
+
+      // Add meta badges
+      const meta = document.getElementById(`meta-${cid}`);
+      if (meta) {
+        meta.innerHTML = '';
+        if (decision) {
+          meta.innerHTML += `<span class="badge badge-decision badge-${decision}">${decision.replace('_',' ')}</span>`;
+        }
+        if (data.category) {
+          meta.innerHTML += `<span class="badge badge-category">${data.category}</span>`;
+        }
+        if (data.duration_ms) {
+          meta.innerHTML += `<span class="badge badge-category">${(data.duration_ms/1000).toFixed(1)}s</span>`;
+        }
+      }
+    }
+
+    // Remove from processing panel
+    this.clearProcessing(cid);
+
+    // Metrics are updated server-side and sent via snapshot
+    // No need to increment here to avoid double-counting
+    this.renderMetrics();
+  }
+
+  onTicketError(cid, data) {
+    const card = this.ticketCards[cid];
+    if (card) {
+      card.classList.remove('active');
+      card.style.borderLeftColor = 'var(--accent-red)';
+      this.addFeedStep(cid, `Error: ${(data.error || 'unknown').substring(0, 60)}`, 'error');
+    }
+    this.clearProcessing(cid);
+  }
+
+  // ─── Helpers ───
+
+  addFeedStep(cid, label, status, toolUseId) {
+    const stepsEl = document.getElementById(`steps-${cid}`);
+    if (!stepsEl) return;
+    const step = document.createElement('div');
+    step.className = `step ${status}`;
+    if (toolUseId) step.dataset.toolUseId = toolUseId;
+    const icons = { active: '\u23F3', done: '\u2705', error: '\u274C' };
+    step.innerHTML = `<span class="step-icon">${icons[status] || '\u2022'}</span> ${label}`;
+    stepsEl.appendChild(step);
+  }
+
+  showProcessing(cid) {
+    const proc = document.getElementById('processing');
+    const empty = proc.querySelector('.processing-empty');
+    if (empty) empty.remove();
+  }
+
+  clearProcessing(cid) {
+    // Remove all agent cards for this conversation
+    Object.keys(this.agentCards).forEach(key => {
+      if (key.startsWith(`${cid}-`)) {
+        this.agentCards[key].remove();
+        delete this.agentCards[key];
+      }
+    });
+
+    // Show empty state if no active tickets
+    const proc = document.getElementById('processing');
+    if (proc.querySelectorAll('.agent-card').length === 0) {
+      proc.innerHTML = `
+        <div class="processing-empty">
+          <div class="processing-empty-icon">&#9881;</div>
+          <div class="processing-empty-text">Waiting for tickets...</div>
+        </div>`;
+    }
+  }
+
+  findActiveAgent(cid) {
+    const keys = Object.keys(this.agentCards).filter(k => k.startsWith(`${cid}-`));
+    return keys.length > 0 ? keys[keys.length - 1] : null;
+  }
+
+  updateFeedCount() {
+    const count = Object.keys(this.ticketCards).length;
+    document.getElementById('feed-count').textContent = `${count} ticket${count !== 1 ? 's' : ''}`;
+  }
+
+  timeAgo(ts) {
+    if (!ts) return '';
+    const diff = Date.now() / 1000 - ts;
+    if (diff < 60) return `${Math.floor(diff)}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    return `${Math.floor(diff / 3600)}h ago`;
+  }
+
+  // ─── Metrics Rendering ───
+
+  renderMetrics() {
+    const m = this.metrics;
+
+    // Header stats
+    document.getElementById('stat-processed').textContent = m.total_processed;
+    if (m.total_processed > 0) {
+      const avgMs = m.total_duration_ms / m.total_processed;
+      document.getElementById('stat-avg-time').textContent = `${(avgMs / 1000).toFixed(1)}s`;
+      const autoRate = ((m.auto_handle_count / m.total_processed) * 100).toFixed(0);
+      document.getElementById('stat-auto-rate').textContent = `${autoRate}%`;
+    }
+
+    // Donut chart
+    this.drawDonut(m.auto_handle_count, m.needs_research_count, m.escalate_count);
+    document.getElementById('donut-total').textContent = m.total_processed;
+
+    // Category bar chart
+    this.drawBars(m.category_counts);
+
+    // Confidence gauge
+    if (m.confidence_count > 0) {
+      const avg = m.confidence_sum / m.confidence_count;
+      const angle = avg * 180;
+      document.getElementById('gauge-arc').style.setProperty('--gauge-angle', `${angle}deg`);
+      document.getElementById('gauge-value').textContent = avg.toFixed(2);
+    }
+
+    // Cost
+    document.getElementById('cost-total').textContent = `$${(m.total_cost_usd || 0).toFixed(2)}`;
+  }
+
+  drawDonut(auto, research, escalate) {
+    const canvas = document.getElementById('chart-donut');
+    const ctx = canvas.getContext('2d');
+    const cx = 90, cy = 90, r = 70, lw = 20;
+    ctx.clearRect(0, 0, 180, 180);
+
+    const total = auto + research + escalate;
+    if (total === 0) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = lw;
+      ctx.stroke();
+      return;
+    }
+
+    const segments = [
+      { value: auto, color: '#22c55e' },
+      { value: research, color: '#eab308' },
+      { value: escalate, color: '#ef4444' },
+    ];
+
+    let startAngle = -Math.PI / 2;
+    segments.forEach(seg => {
+      if (seg.value === 0) return;
+      const sweep = (seg.value / total) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, startAngle, startAngle + sweep);
+      ctx.strokeStyle = seg.color;
+      ctx.lineWidth = lw;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      startAngle += sweep;
+    });
+  }
+
+  drawBars(categories) {
+    const container = document.getElementById('chart-categories');
+    const cats = ['billing', 'technical', 'account', 'product', 'general'];
+    const maxVal = Math.max(1, ...cats.map(c => categories[c] || 0));
+
+    container.innerHTML = cats.map(cat => {
+      const count = categories[cat] || 0;
+      const pct = (count / maxVal) * 100;
+      return `
+        <div class="bar-row">
+          <span class="bar-label">${cat}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+          <span class="bar-count">${count}</span>
+        </div>`;
+    }).join('');
+  }
+
+  // ─── Tab Switching ───
+
+  switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.tab === tab);
+    });
+    document.getElementById('feed').style.display = tab === 'live' ? '' : 'none';
+    document.getElementById('history').style.display = tab === 'history' ? '' : 'none';
+
+    if (tab === 'history' && !this._historyLoaded) {
+      this.loadHistory();
+    }
+  }
+
+  async loadHistory(offset = 0) {
+    try {
+      const resp = await fetch(`/api/v1/dashboard/history?limit=50&offset=${offset}`);
+      const data = await resp.json();
+      const container = document.getElementById('history');
+
+      if (offset === 0) container.innerHTML = '';
+
+      if (data.tickets.length === 0 && offset === 0) {
+        container.innerHTML = '<div class="history-empty">No historical tickets yet</div>';
+        return;
+      }
+
+      data.tickets.forEach(t => {
+        const card = document.createElement('div');
+        card.className = `history-card decision-${t.decision || ''}`;
+        card.onclick = () => this.showTicketDetail(t.conversation_id);
+
+        const date = t.completed_at
+          ? new Date(t.completed_at * 1000).toLocaleString()
+          : '--';
+        const duration = t.duration_ms
+          ? `${(t.duration_ms / 1000).toFixed(1)}s`
+          : '--';
+
+        card.innerHTML = `
+          <div class="history-top">
+            <span class="history-id">#${t.conversation_id}</span>
+            <span class="history-date">${date}</span>
+          </div>
+          <div class="ticket-meta">
+            ${t.decision ? `<span class="badge badge-decision badge-${t.decision}">${t.decision.replace('_',' ')}</span>` : ''}
+            ${t.category ? `<span class="badge badge-category">${t.category}</span>` : ''}
+          </div>
+          <div class="history-stats">
+            <span>Duration: <span class="history-stat-value">${duration}</span></span>
+            <span>Cost: <span class="history-stat-value">$${(t.cost_usd || 0).toFixed(4)}</span></span>
+            <span>Turns: <span class="history-stat-value">${t.turns || '--'}</span></span>
+            ${t.confidence != null ? `<span>Confidence: <span class="history-stat-value">${t.confidence.toFixed(2)}</span></span>` : ''}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      // Load more button
+      if (data.tickets.length === 50) {
+        const existing = container.querySelector('.load-more-btn');
+        if (existing) existing.remove();
+        const btn = document.createElement('button');
+        btn.className = 'load-more-btn';
+        btn.textContent = 'Load more...';
+        btn.onclick = () => { btn.remove(); this.loadHistory(offset + 50); };
+        container.appendChild(btn);
+      }
+
+      this._historyLoaded = true;
+    } catch (err) {
+      console.error('Failed to load history:', err);
+    }
+  }
+
+  async showTicketDetail(conversationId) {
+    try {
+      const resp = await fetch(`/api/v1/dashboard/history/${conversationId}`);
+      const data = await resp.json();
+      const content = document.getElementById('detail-content');
+
+      let firstTs = null;
+      const timeline = data.events.map(ev => {
+        if (!firstTs) firstTs = ev.timestamp;
+        const elapsed = ((ev.timestamp - firstTs) * 1000).toFixed(0);
+        const icon = this.eventIcon(ev);
+        const label = this.eventLabel(ev);
+        return `
+          <div class="detail-event">
+            <span class="detail-event-time">+${elapsed}ms</span>
+            <span class="detail-event-icon">${icon}</span>
+            <span class="detail-event-label">${label}</span>
+          </div>`;
+      }).join('');
+
+      content.innerHTML = `
+        <div class="detail-title">Ticket #${conversationId}</div>
+        <div class="detail-timeline">${timeline || '<div style="color:var(--text-muted)">No events recorded</div>'}</div>
+      `;
+
+      document.getElementById('detail-overlay').classList.add('open');
+    } catch (err) {
+      console.error('Failed to load ticket detail:', err);
+    }
+  }
+
+  closeDetail() {
+    document.getElementById('detail-overlay').classList.remove('open');
+  }
+
+  eventIcon(ev) {
+    switch (ev.type) {
+      case 'ticket_received': return '\u{1F4E8}';
+      case 'agent_start': return '\u{1F916}';
+      case 'tool_call': return SERVICE_ICONS[ev.data?.service] || '\u2699\uFE0F';
+      case 'tool_result': return ev.data?.is_error ? '\u274C' : '\u2705';
+      case 'ticket_complete': return '\u{1F389}';
+      case 'ticket_error': return '\u{1F6A8}';
+      default: return '\u2022';
+    }
+  }
+
+  eventLabel(ev) {
+    switch (ev.type) {
+      case 'ticket_received': return 'Ticket received';
+      case 'agent_start': return `${AGENT_LABELS[ev.data?.agent] || 'Agent'} started`;
+      case 'tool_call': return `${ev.data?.service || ''}/${ev.data?.tool || ''}`;
+      case 'tool_result': return ev.data?.is_error ? 'Tool error' : 'Tool completed';
+      case 'ticket_complete': return `Completed (${ev.data?.decision || 'done'})`;
+      case 'ticket_error': return `Error: ${(ev.data?.error || '').substring(0, 80)}`;
+      default: return ev.type;
+    }
+  }
+}
+
+// Boot
+let dashboard;
+document.addEventListener('DOMContentLoaded', () => { dashboard = new SentinelDashboard(); });
+</script>
+</body>
+</html>
